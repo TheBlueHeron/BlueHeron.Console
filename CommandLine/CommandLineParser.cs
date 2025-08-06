@@ -1,4 +1,3 @@
-using System.Collections;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.Reflection;
@@ -23,7 +22,9 @@ public sealed partial class CommandLineParser : IDisposable
 	private readonly List<string> mOptionalUsageInfo = [];
 	private readonly Dictionary<string, Tuple<MemberInfo, bool>> mRequiredOptions = [];
 	private readonly List<string> mRequiredUsageInfo = [];
-    private readonly char[] mSeparators = [Constants.Colon];
+
+    private readonly char[] mQuotes = [Constants.Quote, Constants.Apostrophe];
+    private readonly char[] mSeparators = [Constants.Colon, Constants.Equal];
 
     #endregion
 
@@ -121,7 +122,7 @@ public sealed partial class CommandLineParser : IDisposable
     /// <returns>A <see langword="bool"/>, <see langword="true"/> if parsing was successful; else <see langword="false"/>.</returns>
     public bool Parse(string[] args)
     {
-        if (args.Contains(Constants.Question) || args.Contains(Constants.HELP))
+        if (args.Contains(Constants.QUESTION) || args.Contains(Constants.HELP))
         {
             Usage();
             return false;
@@ -176,9 +177,17 @@ public sealed partial class CommandLineParser : IDisposable
     /// <param name="type">The <see cref="Type"/> to convert the value into</param>
     /// <returns>The converted value</returns>
     [DebuggerStepThrough]
-    private static object? ChangeType(string value, Type type)
+    private object? ChangeType(string value, Type type)
     {
-        return string.IsNullOrEmpty(value) ? null : TypeDescriptor.GetConverter(type).ConvertFromInvariantString(value);
+        if (string.IsNullOrEmpty(value))
+        {
+            return null;
+        }
+        if (type == typeof(string))
+        {
+            return value.Trim(mQuotes);
+        }
+        return TypeDescriptor.GetConverter(type).ConvertFromInvariantString(value);
     }
 
     /// <summary>
@@ -262,8 +271,9 @@ public sealed partial class CommandLineParser : IDisposable
             Error(Constants.errUnknown, name);
             return false;
         }
-        var value = (split.Length > 1) ? split[1] : field.GetFieldType() == typeof(bool) ? Constants.TRUE : string.Empty;
-        return SetOption(field, value, false);
+        var fieldType = field.GetFieldType();
+        var value = (split.Length > 1) ? split[1] : fieldType == typeof(bool) ? Constants.TRUE : string.Empty;
+        return SetOption(field, value);
     }
 
     /// <summary>
@@ -282,8 +292,14 @@ public sealed partial class CommandLineParser : IDisposable
             Error(Constants.errUnknown, name);
             return false;
         }
-        var value = (split.Length > 1) ? split[1] : field.Item1.GetFieldType() == typeof(bool) ? Constants.TRUE : string.Empty;
-        if (SetOption(field.Item1, value, false))
+        var fieldType = field.Item1.GetFieldType();
+        var value = (split.Length > 1) ? split[1] : fieldType == typeof(bool) ? Constants.TRUE : string.Empty;
+        if (string.IsNullOrEmpty(value))
+        {
+            Error(Constants.errMissing, name);
+            return false;
+        }
+        if (SetOption(field.Item1, value))
         {
             mRequiredOptions[name.ToLowerInvariant()] = new(field.Item1, true);
             return true;
@@ -296,13 +312,12 @@ public sealed partial class CommandLineParser : IDisposable
     /// </summary>
     /// <param name="member">The <see cref="MemberInfo"/> to set</param>
     /// <param name="value">The value</param>
-    /// <param name="isList">If <see langword="true"/> the <see cref="MemberInfo"/> represents a <see cref="IList"/> value</param>
     /// <returns>A <see langword="bool"/>, <see langword="true"/> if the value was properly set</returns>
-    private bool SetOption(MemberInfo member, string value, bool isList)
+    private bool SetOption(MemberInfo member, string value)
     {
         try
         {
-            if (isList)
+            if (member.IsList())
             {
                 member.GetList(mOptions)?.Add(ChangeType(value, member.GetListElementType())); // append the value to the list of options
             }

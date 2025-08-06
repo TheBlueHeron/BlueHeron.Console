@@ -28,10 +28,12 @@ internal class Constants
 
     #region Char
 
+    internal const char Apostrophe = '\'';
     internal const char At = '@';
     internal const char Colon = ':';
+    internal const char Equal = '=';
     internal const char Minus = '-';
-    internal const string Question = "?";
+    internal const char Quote = '\"';
     internal const char Slash = '/';
     internal const char Space = ' ';
 
@@ -39,5 +41,6 @@ internal class Constants
 
     internal const string HELP = "help";
     internal const string OPTIONS = "Options:";
+    internal const string QUESTION = "?";
     internal const string TRUE = "true";
 }

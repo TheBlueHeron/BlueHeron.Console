@@ -37,6 +37,7 @@ internal static class Extensions
     /// Returns the <see cref="IList"/> represented by this <see cref="MemberInfo"/> on the given options object.
     /// </summary>
     /// <param name="member">This <see cref="MemberInfo"/></param>
+    [DebuggerStepThrough]
     internal static IList? GetList(this MemberInfo member, object options)
     {
         return (IList?)member.GetValue(options);
@@ -46,6 +47,7 @@ internal static class Extensions
     /// Gets the type of the element in the <see cref="IList"/>, represented by this <see cref="MemberInfo"/>.
     /// </summary>
     /// <param name="member">This <see cref="MemberInfo"/></param>
+    [DebuggerStepThrough]
     internal static Type GetListElementType(this MemberInfo member)
     {
         return GetFieldType(member).GetInterfaces().Where(i => i.IsGenericType && i.GetGenericTypeDefinition() == typeof(IEnumerable<>)).First().GetGenericArguments()[0];
@@ -86,6 +88,7 @@ internal static class Extensions
     /// Returns a <see langword="bool"/> determining whether this <see cref="MemberInfo"/> represents an <see cref="IList"/> implementation.
     /// </summary>
     /// <param name="member">This <see cref="MemberInfo"</param>
+    [DebuggerStepThrough]
     internal static bool IsList(this MemberInfo member)
     {
         return typeof(IList).IsAssignableFrom(GetFieldType(member));
