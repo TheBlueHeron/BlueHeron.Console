@@ -16,7 +16,7 @@ For simplicity's sake the following limitations apply:
 - Arguments and their values only follow this pattern: `/Argument:value`.
 - Required fields start with a minus sign, e.g. `-RequiredArgument:"Argument value"`.
 - Optional fields start with a forward slash, e.g. `/OptionalArgument:12345`.
-- Commands also start with a forward slash, e.g. `/Copy Source:"Sourcepath" -Target:"Destinationpath"`.
+- Commands also start with a forward slash, e.g. `/Copy -Source:"Sourcepath" -Target:"Destinationpath"`.
 - Lists are populated by repeating the argument, e.g. `/Path:"Path1" /Path:"Path2" /Path:"Path3"`.
 - Booleans only need to be set when the value is `true` and don't need a value, e.g. `/FailSilently`. `/FailSilenty:true` or `/FailSilenty:false` is accepted, but unnecessary.
  
@@ -165,6 +165,15 @@ internal class ListOptions
     [Name("Path"), Description("Add path to the Paths collection")]
     public List<string> Paths { get; set; } = []; // shouldn't be null
 }
+
+/// <summary>
+/// Should pass only when at least one list item is set.
+/// </summary>
+internal class RequiredListOptions
+{
+    [Name("Path"), Description("Add path to the Paths collection"), Required]
+    public List<string> Paths { get; set; } = []; // shouldn't be null
+}
 ```
 
 ### Command parsing
@@ -243,8 +252,9 @@ internal class DeleteCommand
 }
 ```
 
-### Usage Information output:
+### Usage information output example:
 
+```
 Usage: C:\<Source>\BlueHeron.Console\CommandLine.Tests\bin\Release\net9.0\CommandLine.Tests.exe 
 
 Options:
@@ -261,3 +271,5 @@ Options:
 /Delete (Delete a file.)
 
 Usage: C:\<Source>\BlueHeron.Console\CommandLine.Tests\bin\Release\net9.0\CommandLine.Tests.exe /Delete -Source:value (The full path to the source file.)
+
+```
