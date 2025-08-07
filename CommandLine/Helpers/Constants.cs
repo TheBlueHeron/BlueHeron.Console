@@ -17,6 +17,7 @@ internal class Constants
 
     #region Formats
 
+    internal const string fmtCommand = "/{0}\r\n\r\n{1}";
     internal const string fmtDescription = " ({0})";
     internal const string fmtOptional = "/{0}:value{1}";
     internal const string fmtOptionalBool = "/{0}{1}";
@@ -39,6 +40,7 @@ internal class Constants
 
     #endregion
 
+    internal const string COMMANDS = "Commands:";
     internal const string HELP = "help";
     internal const string OPTIONS = "Options:";
     internal const string QUESTION = "?";

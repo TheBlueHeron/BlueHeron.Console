@@ -1,12 +1,12 @@
 using System.ComponentModel;
 using System.Diagnostics;
 using System.Reflection;
+using System.Text;
 
 namespace BlueHeron.CommandLine;
 
 /// <summary>
 /// Reflection based commandline options parser.
-/// The value of a (1st and only) argument starting with '@' is treated as a text file where each line contains an argument and its value, if needed.
 /// Arguments starting with a forward slash are treated as optional arguments.
 /// Arguments starting with a minus sign are treated as required arguments.
 /// Argument '?' or 'help' will cause output of usage information.
@@ -18,6 +18,8 @@ public sealed partial class CommandLineParser : IDisposable
     private bool mDisposed;
     private readonly object mOptions;
     private readonly TextWriter mOutput;
+    private readonly Dictionary<string, CommandLineParser> mCommands = [];
+    private readonly Dictionary<string, string> mCommandUsageInfo = [];
     private readonly Dictionary<string, MemberInfo> mOptionalOptions = [];
 	private readonly List<string> mOptionalUsageInfo = [];
 	private readonly Dictionary<string, Tuple<MemberInfo, bool>> mRequiredOptions = [];
@@ -43,11 +45,24 @@ public sealed partial class CommandLineParser : IDisposable
 
         foreach (var field in mOptions.GetType().GetMembers(BindingFlags.Public | BindingFlags.Instance).Where(m => m.MemberType == MemberTypes.Field || m.MemberType == MemberTypes.Property)) // loop over defined public instance fields and properties
         {
-            var fieldName = field.GetOptionName();
+            var isCommand = field.IsCommand();
+            var fieldName = isCommand ? field.GetCommandName() : field.GetOptionName();
             var fieldDescription = field.GetOptionDescription();
 
             fieldDescription = fieldDescription == null ? string.Empty : string.Format(Constants.fmtDescription, fieldDescription);
-            if (field.IsRequired())
+
+            if (isCommand)
+            {
+                var commandOptions = field.GetValue(options);
+                if (commandOptions != null)
+                {
+                    var commandParser = new CommandLineParser(commandOptions, mOutput) { IgnoreUnrecognizedArgument = true };
+
+                    mCommands.Add(fieldName.ToLowerInvariant(), commandParser);
+                    mCommandUsageInfo.Add($"{fieldName}{fieldDescription}", commandParser.GetUsage(fieldName));
+                }
+            }
+            else if (field.IsRequired())
             {
                 mRequiredOptions.Add(fieldName.ToLowerInvariant(), new(field, false));
                 mRequiredUsageInfo.Add(string.Format(Constants.fmtRequired, fieldName, fieldDescription));
@@ -116,6 +131,16 @@ public sealed partial class CommandLineParser : IDisposable
     }
 
     /// <summary>
+    /// Returns the usage info as a string.
+    /// </summary>
+    /// <param name="commandName">Optional name of the command represented by this <see cref="CommandLineParser"/></param>
+    [DebuggerStepThrough]
+    public string GetUsage()
+    {
+        return GetUsage(null);
+    }
+
+    /// <summary>
     /// Parses the commandline and returns <see langword="true"/> if the operation was successful.
     /// </summary>
     /// <param name="args">The commandline arguments</param>
@@ -131,7 +156,7 @@ public sealed partial class CommandLineParser : IDisposable
         {
             foreach (var arg in args)
             {
-                if (!ParseArgument(arg.Trim()))
+                if (!ParseArgument(arg.Trim(), args))
                 {
                     return false;
                 }
@@ -154,16 +179,7 @@ public sealed partial class CommandLineParser : IDisposable
     [DebuggerStepThrough]
     public void Usage()
     {
-        var name = Path.GetFileNameWithoutExtension(Process.GetCurrentProcess().ProcessName);
-
-        mOutput.WriteLine(Constants.fmtUsage, name, string.Join(Constants.Space, mRequiredUsageInfo));
-        mOutput.WriteLine();
-        mOutput.WriteLine(Constants.OPTIONS);
-
-        foreach (var optional in mOptionalUsageInfo)
-        {
-            mOutput.WriteLine(Constants.fmtOptions, optional);
-        }
+        WriteUsage(mOutput);
     }
 
     #endregion
@@ -207,19 +223,51 @@ public sealed partial class CommandLineParser : IDisposable
     }
 
     /// <summary>
+    /// Returns the usage info as a string.
+    /// </summary>
+    /// <param name="commandName">Optional name of the command represented by this <see cref="CommandLineParser"/></param>
+    [DebuggerStepThrough]
+    private string GetUsage(string? commandName = null)
+    {
+        var sb = new StringBuilder();
+        using var writer = new StringWriter(sb);
+
+        WriteUsage(writer, commandName);
+        return sb.ToString();
+    }
+
+    /// <summary>
+    /// Returns a boolean determining whether the required field that represents the given argument was successfully handled by this parser or any of the command parsers it contains.
+    /// </summary>
+    /// <param name="name">The argument to assert</param>
+    /// <returns><see langword="true"/> if the required field was handled; else <see langword="false"/></returns>
+    private bool IsRequiredFieldHandled(string name)
+    {
+        if (mRequiredOptions.TryGetValue(name, out var value) && value.Item2 == true)
+        {
+            return true;
+        }
+        return mCommands.Count > 0 && mCommands.Values.Where(p => p.IsRequiredFieldHandled(name)).Any();
+    }
+
+    /// <summary>
     /// Parses the given argument.
     /// </summary>
-    /// <param name="arg">The argument</param>
+    /// <param name="arg">The current argument</param>
+    /// <param name="args">All commandline arguments</param>
     /// <returns>A <see langword="bool"/>, <see langword="true"/> if parsing was successful; else <see langword="false"/></returns>
-    private bool ParseArgument(string arg)
+    private bool ParseArgument(string arg, string[] args)
     {
-        if (arg.StartsWith(Constants.At))
+        if (arg.StartsWith(Constants.Slash)) // parse optional argument
         {
-            return ParseFile(arg[1..]); // parse argument file
-        }
-        else if (arg.StartsWith(Constants.Slash)) // parse optional argument
-        {
-            return ParseOptionalArgument(arg);
+            if (mCommands.ContainsKey(arg[1..].ToLowerInvariant()))
+            {
+                return ParseCommandArgument(arg[1..].ToLowerInvariant(), args);
+            }
+            else
+            {
+                return ParseOptionalArgument(arg);
+            }
         }
         else if (arg.StartsWith(Constants.Minus)) // parse required argument
         {
@@ -232,27 +280,14 @@ public sealed partial class CommandLineParser : IDisposable
     }
 
     /// <summary>
-    /// Parses the file with the given name.
+    /// Parses the command with the given argument
     /// </summary>
-    /// <param name="fileName">The file name</param>
+    /// <param name="arg">The command argument</param>
+    /// <param name="args">All commandline parameters</param>
     /// <returns>A <see langword="bool"/>, <see langword="true"/> if parsing was successful; else <see langword="false"/></returns>
-    private bool ParseFile(string fileName)
+    private bool ParseCommandArgument(string arg, string[] args)
     {
-        string[] lines;
-
-        try
-        {
-            lines = File.ReadAllLines(fileName);
-        }
-        catch
-        {
-            Error(Constants.errResFile, fileName);
-            return false;
-        }
-
-        return lines.Select(line => line.Trim())
-                    .Where(line => !string.IsNullOrEmpty(line))
-                    .All(ParseArgument);
+        return mCommands[arg].Parse(args);
     }
 
     /// <summary>
@@ -268,6 +303,10 @@ public sealed partial class CommandLineParser : IDisposable
 
         if (!mOptionalOptions.TryGetValue(name.ToLowerInvariant(), out field))
         {
+            if (IgnoreUnrecognizedArgument)
+            {
+                return true;
+            }
             Error(Constants.errUnknown, name);
             return false;
         }
@@ -289,6 +328,10 @@ public sealed partial class CommandLineParser : IDisposable
 
         if (!mRequiredOptions.TryGetValue(name.ToLowerInvariant(), out field))
         {
+            if (IgnoreUnrecognizedArgument || IsRequiredFieldHandled(name.ToLowerInvariant()))
+            {
+                return true;
+            }
             Error(Constants.errUnknown, name);
             return false;
         }
@@ -331,6 +374,36 @@ public sealed partial class CommandLineParser : IDisposable
         {
             Error(Constants.errInvalid, value, member.GetOptionName());
             return false;
+        }
+    }
+
+    /// <summary>
+    /// Writes usage info to the given <see cref="TextWriter"/>
+    /// </summary>
+    /// <param name="writer">The <see cref="TextWriter"/> to use</param>
+    /// <param name="commandName">Optional name of the command represented by this <see cref="CommandLineParser"/></param>
+    private void WriteUsage(TextWriter writer, string? commandName = null)
+    {
+        var name = Process.GetCurrentProcess().MainModule?.FileName ?? Constants.QUESTION;
+
+        writer.WriteLine(Constants.fmtUsage, string.IsNullOrEmpty(commandName) ? name : $"{name} /{commandName}", string.Join(Constants.Space, mRequiredUsageInfo));
+        if (mOptionalUsageInfo.Count != 0)
+        {
+            writer.WriteLine();
+            writer.WriteLine(Constants.OPTIONS);
+            foreach (var optional in mOptionalUsageInfo)
+            {
+                writer.WriteLine(Constants.fmtOptions, optional);
+            }
+        }
+        if (mCommands.Count != 0)
+        {
+            writer.WriteLine();
+            writer.WriteLine(Constants.COMMANDS);
+            foreach (var command in mCommandUsageInfo)
+            {
+                writer.WriteLine(Constants.fmtCommand, command.Key, command.Value);
+            }
         }
     }
 

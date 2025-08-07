@@ -23,6 +23,16 @@ internal static class Extensions
     }
 
     /// <summary>
+    /// Returns the value of the <see cref="CommandAttribute"/> if present; else the <see cref="MemberInfo.Name"/> value.
+    /// </summary>
+    /// <param name="member">This <see cref="MemberInfo"/></param>
+    [DebuggerStepThrough]
+    internal static string GetCommandName(this MemberInfo member)
+    {
+        return member.GetAttribute<CommandAttribute>()?.Name ?? member.Name;
+    }
+
+    /// <summary>
     /// Returns either the <see cref="FieldInfo.FieldType"/> or the <see cref="PropertyInfo.PropertyType"/>, depending on the <see cref="MemberInfo.MemberType"/>.
     /// </summary>
     /// <param name="member">This <see cref="MemberInfo"/></param>
@@ -82,6 +92,16 @@ internal static class Extensions
     internal static object? GetValue(this MemberInfo member, object options)
     {
     return member.MemberType == MemberTypes.Field ? ((FieldInfo)member).GetValue(options) : ((PropertyInfo)member).GetValue(options);
+    }
+
+    /// <summary>
+    /// Returns a <see langword="bool"/>, determining whether the option represented by this <see cref="MemberInfo"/> is a command (i.e. has a <see cref="CommandAttribute"/> defined on it).
+    /// </summary>
+    /// <param name="member">This <see cref="MemberInfo"/></param>
+    [DebuggerStepThrough]
+    internal static bool IsCommand(this MemberInfo member)
+    {
+        return GetAttribute<CommandAttribute>(member) != null;
     }
 
     /// <summary>

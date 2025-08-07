@@ -1,6 +1,5 @@
 ﻿using System.Text;
 using BlueHeron.CommandLine;
-using Description = BlueHeron.CommandLine.DescriptionAttribute;
 
 namespace CommandLine.Tests;
 
@@ -8,7 +7,7 @@ namespace CommandLine.Tests;
 public sealed class Tests(TestContext ctx)
 {
     [TestMethod]
-    public void TestUsageInfo()
+    public void TestBasicUsageInfo()
     {
         var options = new BasicOptions();
         var sb = new StringBuilder();
@@ -23,15 +22,31 @@ public sealed class Tests(TestContext ctx)
     }
 
     [TestMethod]
+    public void TestCommandUsageInfo()
+    {
+        var options = new CommandOptions();
+        var sb = new StringBuilder();
+        using var parser = new CommandLineParser(options, new StringWriter(sb));
+
+        parser.Usage();
+
+        var usage = sb.ToString();
+
+        Assert.IsNotNull(usage);
+        ctx.WriteLine(usage);
+    }
+
+    [TestMethod]
     public void BasicParsing()
     {
         var options = new BasicOptions();
         using var parser = new CommandLineParser(options);
 
-        var parsingOk = parser.Parse(["/A:ValueA", "/B:ValueB", "-C:ValueC", "/Bl1", "/Bl2:false", "-N1:12", "/N2:3.1415"]); // set all fields and assert
+        var parsingOk = parser.Parse(["/A:ValueA", "/B:ValueB", "-C:ValueC", "/Bl1", "/Bl2:false", "-N1:12", "/N2:3.1415", "/E1:Value1"]); // set all fields and assert
 
         Assert.IsTrue(
             parsingOk &&
+            options.EnumOption1 == MyEnum.Value1 &&
             options.BooleanOption0 == true &&
             options.BooleanOption1 == false &&
             options.NumberOption0 == 12 &&
@@ -46,6 +61,7 @@ public sealed class Tests(TestContext ctx)
         parsingOk = parser2.Parse(["-C:ValueC", "-N1:12"]); // set required fields only and assert
         Assert.IsTrue(
             parsingOk &&
+            options.EnumOption1 == MyEnum.Value0 &&
             options.BooleanOption0 == false &&
             options.BooleanOption1 == false &&
             options.NumberOption0 == 12 &&
@@ -53,6 +69,22 @@ public sealed class Tests(TestContext ctx)
             options.StringOptionA == null &&
             options.StringOptionB == null &&
             options.StringOptionC == "ValueC"
+            );
+    }
+
+    [TestMethod]
+    public void CommandParsing()
+    {
+        var options = new CommandOptions();
+        using var parser = new CommandLineParser(options);
+        bool parsingOk;
+
+        parsingOk = parser.Parse(["/Copy", "-Source:\"C:\\My Folder\\Source File.txt\"", "-Target:\"C:\\My Folder\\Target File.txt\"", "/FailSilently:true"]);
+        Assert.IsTrue(
+            parsingOk &&
+            options.FailSilently == true &&
+            options.Copy.SourcePath == "C:\\My Folder\\Source File.txt" &&
+            options.Copy.DestinationPath == "C:\\My Folder\\Target File.txt"
             );
     }
 
@@ -108,66 +140,4 @@ public sealed class Tests(TestContext ctx)
         ctx.WriteLine(sb.ToString());
         sb.Clear();
     }
-}
-
-/// <summary>
-/// Public properties and fields should be recognized when at least the Name attribute is set.
-/// Private, protected, internal and static fields and properties should be ignored in the constructor.
-/// </summary>
-public class BasicOptions
-{
-    [Name("A"), Description("StringOptionA")]
-    public string StringOptionA { get; set; } = null!;
-
-    [Name("B"), Description("StringOptionB")]
-    public string StringOptionB = null!;
-
-    [Name("C"), Description("StringOptionC -> required"), Required]
-    public string StringOptionC = null!;
-
-    [Name("Bl1"), Description("BooleanOption0")]
-    public bool BooleanOption0 { get; set; }
-
-    [Name("Bl2"), Description("BooleanOption1")]
-    public bool BooleanOption1;
-
-    [Name("N1"), Description("NumberOption0 -> required int"), Required]
-    public int NumberOption0 { get; set; }
-
-    [Name("N2"), Description("NumberOption1 -> double")]
-    public double NumberOption1;
-
-    // These fields will be ignored, no matter if Name attribute is set. The Required attribute asserts this
-
-    [Name("Faulty1"), Required] 
-    public static string StaticField = "MyStaticField";
-
-    public static int StaticProperty { get; set; } = 2;
-
-    protected string ProtectedField = "MyProtectedField";
-
-    [Name("Faulty2"), Required]
-    protected static int ProtectedProperty { get; set; } = 2;
-
-    [Name("Faulty3"), Required]
-    internal string InternalField = "MyInternalField";
-}
-
-/// <summary>
-/// Should accept multiple '/Path' arguments. String field should accept all variants:
-/// /Path:Foo.html, /Path:"C:\\My Folder\\Some File.txt", /Path:'C:\\My Folder\\Another File.txt'
-/// </summary>
-public class ListOptions
-{
-    [Name("Path"), Description("Add path to the Paths collection")]
-    public List<string> Paths { get; set; } = []; // shouldn't be null
-}
-
-/// <summary>
-/// Should pass only when at least one list item is set.
-/// </summary>
-public class RequiredListOptions
-{
-    [Name("Path"), Description("Add path to the Paths collection"), Required]
-    public List<string> Paths { get; set; } = []; // shouldn't be null
 }
