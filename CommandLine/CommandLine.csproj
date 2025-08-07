@@ -4,13 +4,41 @@
 		<ImplicitUsings>enable</ImplicitUsings>
 		<Nullable>enable</Nullable>
 		<EnforceCodeStyleInBuild>True</EnforceCodeStyleInBuild>
+		<GeneratePackageOnBuild>True</GeneratePackageOnBuild>
+		<Title>Commandline Parser</Title>
+		<Authors>Michael Bakker</Authors>
+		<Company>The Blue Heron</Company>
+		<Product>BlueHeron.CommandLine</Product>
+		<Description>Compact commandline parser</Description>
+		<PackageIcon>Icon.png</PackageIcon>
+		<PackageReadmeFile>README.md</PackageReadmeFile>
+		<RepositoryUrl>https://github.com/TheBlueHeron/BlueHeron.Console</RepositoryUrl>
+		<PackageTags>Console, Commandline, Command-line, Parser</PackageTags>
+		<PackageReleaseNotes>First release</PackageReleaseNotes>
+		<PackageLicenseFile>LICENSE.txt</PackageLicenseFile>
 	</PropertyGroup>
 	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
 		<IsTrimmable>False</IsTrimmable>
 		<IsAotCompatible>True</IsAotCompatible>
+		<DebugType>none</DebugType>
 	</PropertyGroup>
 	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
 		<IsTrimmable>False</IsTrimmable>
 		<IsAotCompatible>True</IsAotCompatible>
+		<DebugType>none</DebugType>
 	</PropertyGroup>
+	<ItemGroup>
+	  <None Include="..\Assets\Icon.png">
+	    <Pack>True</Pack>
+	    <PackagePath>\</PackagePath>
+	  </None>
+	  <None Include="..\LICENSE.txt">
+	    <Pack>True</Pack>
+	    <PackagePath>\</PackagePath>
+	  </None>
+	  <None Include="..\README.md">
+	    <Pack>True</Pack>
+	    <PackagePath>\</PackagePath>
+	  </None>
+	</ItemGroup>
 </Project>
