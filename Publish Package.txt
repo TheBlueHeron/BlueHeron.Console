@@ -1,0 +1,2 @@
+
+dotnet nuget push "C:\Users\MB\source\repos\MichaelBakker\BlueHeron.Console\CommandLine\bin\Release\TheBlueHeron.Console.1.0.0.nupkg" --source https://api.nuget.org/v3/index.json --api-key oy2pwnfre2h6rvsmfrmqzzsh5jxjbwlepohx2reo4atvxy

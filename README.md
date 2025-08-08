@@ -26,11 +26,12 @@ To use a command-line parser in C#, you can use the following options:
 1. Install the `BlueHeron.Console` NuGet package via the .NET CLI:
 
 ```bash
-dotnet add package BlueHeron.Console
+dotnet add package TheBlueHeron.Console
 ```
 
 2. Download the latest release here: [Releases](https://github.com/TheBlueHeron/BlueHeron.Console/releases)
 
+3. Or install via [NuGet Gallery](https://www.nuget.org/packages/BlueHeron.CommandLine/#) 
 ## Usage
 The parser takes any object as its options container in its constructor.  
 Through reflection the object is analyzed for the presence of ```Command```, ```Argument```, ```Usage``` and ```Required``` attributes.  
