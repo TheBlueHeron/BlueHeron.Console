@@ -1,7 +1,7 @@
 ﻿using System.Text;
 using BlueHeron.CommandLine;
 
-namespace CommandLine.Tests;
+namespace BlueHeron.CommandLine.Tests;
 
 [TestClass]
 public sealed class Tests(TestContext ctx)

@@ -100,9 +100,24 @@ public sealed partial class CommandLineParser : IDisposable
     #region Properties
 
     /// <summary>
+    /// Returns the command switches available on the options object.
+    /// </summary>
+    public IEnumerable<KeyValuePair<string, string>> Commands => mCommands.Keys.Select((c, i) => new KeyValuePair<string, string>(c, mCommandUsageInfo.ElementAt(i).Value));
+
+    /// <summary>
     /// If <see langword="false"/> parsing will fail if an unrecognized argument is encountered.
     /// </summary>
     public bool IgnoreUnrecognizedArgument { get; set; } = false;
+
+    /// <summary>
+    /// Returns the optional switches available on the options object.
+    /// </summary>
+    public IEnumerable<KeyValuePair<string, string>> OptionalArguments => mOptionalOptions.Keys.Select((o, i) => new KeyValuePair<string, string>(o, mOptionalUsageInfo[i]));
+
+    /// <summary>
+    /// Returns the required switches available on the options object.
+    /// </summary>
+    public IEnumerable<KeyValuePair<string, string>> RequiredArguments => mRequiredOptions.Keys.Select((r, i) => new KeyValuePair<string, string>(r, mRequiredUsageInfo[i]));
 
     #endregion
 

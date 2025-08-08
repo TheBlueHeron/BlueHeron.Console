@@ -1,7 +1,4 @@
-﻿using BlueHeron.CommandLine;
-using Description = BlueHeron.CommandLine.DescriptionAttribute;
-
-namespace CommandLine.Tests;
+﻿namespace BlueHeron.CommandLine.Tests;
 
 /// <summary>
 /// Should accept multiple '/Path' arguments. String field should accept all variants:
@@ -9,6 +6,6 @@ namespace CommandLine.Tests;
 /// </summary>
 internal class ListOptions
 {
-    [Name("Path"), Description("Add path to the Paths collection")]
+    [Argument("Path"), Usage("Add path to the Paths collection")]
     public List<string> Paths { get; set; } = []; // shouldn't be null
 }

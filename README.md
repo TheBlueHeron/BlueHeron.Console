@@ -31,6 +31,16 @@ dotnet add package BlueHeron.Console
 
 2. Download the latest release here: [Releases](https://github.com/TheBlueHeron/BlueHeron.Console/releases)
 
+## Usage
+The parser takes any object as its options container in its constructor.  
+Through reflection the object is analyzed for the presence of ```Command```, ```Argument```, ```Usage``` and ```Required``` attributes.  
+These attributes control the (case-insensitive) validation of the arguments array in the parser's ```Parse(string[] args)``` function.  
+All attributes can be set on public instance properties and fields of the object. Shared and non-public fields and properties are ignored.  
+The value of the ```Command``` and ```Argument``` attributes don't need a prefix like '-' or '/'. These will be prepended automatically, depending on presence of a ```Required``` attribute.  
+The ```Command``` attribute can only be set on fields and properties that represent classes, and that class will be treated as an options object for that particular command.  
+The parser has a single settable property ```SkipUnrecognizedFields``` that causes the parser to not fail when it encounters a switch that is not defined on any of the properties and fields of the options object.  
+The ```Commands```, ```OptionalArguments``` and ```RequiredArguments``` properties enumerate the recognized switches with their usage information.  
+
 ## Examples
 ##### See also: [Tests.cs](https://github.com/TheBlueHeron/BlueHeron.Console/blob/master/CommandLine.Tests/Tests.cs)
 
@@ -73,48 +83,48 @@ public void BasicParsing()
 }
 
 /// <summary>
-/// Public properties and fields should be recognized when at least the Name attribute is set.
+/// Public properties and fields should be recognized when at least the <see cref="ArgumentAttribute"/> is set.
 /// Private, protected, internal and static fields and properties should be ignored in the constructor.
 /// </summary>
 internal class BasicOptions
 {
-    [Name("A"), Description("StringOptionA")]
+    [Argument("A"), Usage("StringOptionA")]
     public string StringOptionA { get; set; } = null!;
 
-    [Name("B"), Description("StringOptionB")]
+    [Argument("B"), Usage("StringOptionB")]
     public string StringOptionB = null!;
 
-    [Name("C"), Description("StringOptionC -> required"), Required]
+    [Argument("C"), Usage("StringOptionC -> required"), Required]
     public string StringOptionC = null!;
 
-    [Name("Bl1"), Description("BooleanOption0")]
+    [Argument("Bl1"), Usage("BooleanOption0")]
     public bool BooleanOption0 { get; set; }
 
-    [Name("Bl2"), Description("BooleanOption1")]
+    [Argument("Bl2"), Usage("BooleanOption1")]
     public bool BooleanOption1 = false;
 
-    [Name("N1"), Description("NumberOption0 -> required int"), Required]
+    [Argument("N1"), Usage("NumberOption0 -> required int"), Required]
     public int NumberOption0 { get; set; }
 
-    [Name("N2"), Description("NumberOption1 -> double")]
+    [Argument("N2"), Usage("NumberOption1 -> double")]
     public double NumberOption1 = 0;
 
-    [Name("E1"), Description("EnumOption1 -> MyEnum")] // both value name ('Value1') and value ('1') are accepted
+    [Argument("E1"), Usage("EnumOption1 -> MyEnum")] // both value name ('Value1') and value ('1') are accepted
     public MyEnum EnumOption1 { get; set; }
 
     // These fields will be ignored, no matter if Name attribute is set. The Required attribute asserts this
 
-    [Name("Faulty1"), Required] 
+    [Argument("Faulty1"), Required] 
     public static string StaticField = "MyStaticField";
 
     public static int StaticProperty { get; set; } = 2;
 
     protected string ProtectedField = "MyProtectedField";
 
-    [Name("Faulty2"), Required]
+    [Argument("Faulty2"), Required]
     protected static int ProtectedProperty { get; set; } = 2;
 
-    [Name("Faulty3"), Required]
+    [Argument("Faulty3"), Required]
     internal string InternalField = "MyInternalField";
 }
 
@@ -163,7 +173,7 @@ public void ListParsing()
 /// </summary>
 internal class ListOptions
 {
-    [Name("Path"), Description("Add path to the Paths collection")]
+    [Argument("Path"), Usage("Add path to the Paths collection")]
     public List<string> Paths { get; set; } = []; // shouldn't be null
 }
 
@@ -172,7 +182,7 @@ internal class ListOptions
 /// </summary>
 internal class RequiredListOptions
 {
-    [Name("Path"), Description("Add path to the Paths collection"), Required]
+    [Argument("Path"), Usage("Add path to the Paths collection"), Required]
     public List<string> Paths { get; set; } = []; // shouldn't be null
 }
 ```
@@ -204,7 +214,7 @@ internal class CommandOptions
     private CopyCommand mCopyCommand = null!;
     private DeleteCommand mDeleteCommand = null!;
 
-    [Command("Copy"), Description("Copy a file to a destination.")]
+    [Command("Copy"), Usage("Copy a file to a destination.")]
     public CopyCommand Copy
     {
         get
@@ -214,7 +224,7 @@ internal class CommandOptions
         }
     }
 
-    [Command("Delete"), Description("Delete a file.")]
+    [Command("Delete"), Usage("Delete a file.")]
     public DeleteCommand Delete
     {
         get
@@ -224,7 +234,7 @@ internal class CommandOptions
         }
     }
 
-    [Name("FailSilently"), Description("If true, the command will not throw an error on failure. Default: false.")]
+    [Argument("FailSilently"), Usage("If true, the command will not throw an error on failure. Default: false.")]
     public bool FailSilently = false;
 }
 
@@ -233,13 +243,13 @@ internal class CommandOptions
 /// </summary>
 internal class CopyCommand
 {
-    [Name("Source"), Description("The full path to the source file."), Required]
+    [Argument("Source"), Usage("The full path to the source file."), Required]
     public string SourcePath { get; set; } = null!;
 
-    [Name("Target"), Description("The full path to the destination file."), Required]
+    [Argument("Target"), Usage("The full path to the destination file."), Required]
     public string DestinationPath { get; set; } = null!;
 
-    [Name("Overwrite"), Description("If true, an existing file on the target will be overwritten. Default: true.")]
+    [Argument("Overwrite"), Usage("If true, an existing file on the target will be overwritten. Default: true.")]
     public bool Overwrite { get; set; } = true;
 }
 
@@ -248,7 +258,7 @@ internal class CopyCommand
 /// </summary>
 internal class DeleteCommand
 {
-    [Name("Source"), Description("The full path to the source file."), Required]
+    [Argument("Source"), Usage("The full path to the source file."), Required]
     public string SourcePath { get; set; } = null!;
 }
 ```

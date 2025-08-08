@@ -5,12 +5,10 @@ using System.Reflection;
 namespace BlueHeron.CommandLine;
 
 /// <summary>
-/// Extension functions for <see cref="FieldInfo"/>.
+/// Extension functions for <see cref="MemberInfo"/>.
 /// </summary>
-internal static class Extensions
+internal static class MemberInfoExtensions
 {
-    #region MemberInfo
-
     /// <summary>
     /// Returns the <see cref="Attribute"/> of type <typeparamref name="T"/> on the given <see cref="MemberInfo"/> if present; else <see langword="null"/>.
     /// </summary>
@@ -29,7 +27,7 @@ internal static class Extensions
     [DebuggerStepThrough]
     internal static string GetCommandName(this MemberInfo member)
     {
-        return member.GetAttribute<CommandAttribute>()?.Name ?? member.Name;
+        return member.GetAttribute<CommandAttribute>()?.Value ?? member.Name;
     }
 
     /// <summary>
@@ -64,23 +62,23 @@ internal static class Extensions
     }
 
     /// <summary>
-    /// Returns the value of the <see cref="DescriptionAttribute"/> if present; else <see langword="null"/>.
+    /// Returns the value of the <see cref="UsageAttribute"/> if present; else <see langword="null"/>.
     /// </summary>
     /// <param name="member">This <see cref="MemberInfo"/></param>
     [DebuggerStepThrough]
     internal static string? GetOptionDescription(this MemberInfo member)
     {
-        return member.GetAttribute<DescriptionAttribute>()?.Description;
+        return member.GetAttribute<UsageAttribute>()?.Value;
     }
 
     /// <summary>
-    /// Returns the value of the <see cref="NameAttribute"/> if present; else the <see cref="MemberInfo.Name"/> value.
+    /// Returns the value of the <see cref="ArgumentAttribute"/> if present; else the <see cref="MemberInfo.Name"/> value.
     /// </summary>
     /// <param name="member">This <see cref="MemberInfo"/></param>
     [DebuggerStepThrough]
     internal static string GetOptionName(this MemberInfo member)
     {
-        return member.GetAttribute<NameAttribute>()?.Name ?? member.Name;
+        return member.GetAttribute<ArgumentAttribute>()?.Value ?? member.Name;
     }
 
     /// <summary>
@@ -142,6 +140,4 @@ internal static class Extensions
             ((PropertyInfo)member).SetValue(options, value);
         }
     }
-
-    #endregion
 }

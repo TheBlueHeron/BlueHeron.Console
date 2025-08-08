@@ -6,10 +6,20 @@ namespace BlueHeron.CommandLine;
 /// </summary>
 /// <param name="name">The commandline option</param>
 [AttributeUsage(AttributeTargets.Field | AttributeTargets.Property | AttributeTargets.Class)]
-public sealed class CommandAttribute(string name) : Attribute
+public sealed class CommandAttribute : Attribute
 {
     /// <summary>
-    /// Gets the name of the commandline option.
+    /// Creates a new <see cref="CommandAttribute"/>.
     /// </summary>
-    public string Name { get; private set; } = name;
+    /// <param name="name">The name of the switch</param>
+    public CommandAttribute(string name)
+    {
+        ArgumentException.ThrowIfNullOrEmpty(name, nameof(name));
+        Value = name;
+    }
+
+    /// <summary>
+    /// Gets the name of the commandline switch.
+    /// </summary>
+    public string Value { get; }
 }

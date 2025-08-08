@@ -1,7 +1,4 @@
-﻿using BlueHeron.CommandLine;
-using Description = BlueHeron.CommandLine.DescriptionAttribute;
-
-namespace CommandLine.Tests;
+﻿namespace BlueHeron.CommandLine.Tests;
 
 /// <summary>
 /// Nested options objects, i.e. the commands should all be parsed like the BasicOptions object. Usage info should handle the commands as well.
@@ -11,7 +8,7 @@ internal class CommandOptions
     private CopyCommand mCopyCommand = null!;
     private DeleteCommand mDeleteCommand = null!;
 
-    [Command("Copy"), Description("Copy a file to a destination.")]
+    [Command("Copy"), Usage("Copy a file to a destination.")]
     public CopyCommand Copy
     {
         get
@@ -21,7 +18,7 @@ internal class CommandOptions
         }
     }
 
-    [Command("Delete"), Description("Delete a file.")]
+    [Command("Delete"), Usage("Delete a file.")]
     public DeleteCommand Delete
     {
         get
@@ -31,6 +28,6 @@ internal class CommandOptions
         }
     }
 
-    [Name("FailSilently"), Description("If true, the command will not throw an error on failure. Default: false.")]
+    [Argument("FailSilently"), Usage("If true, the command will not throw an error on failure. Default: false.")]
     public bool FailSilently = false;
 }
