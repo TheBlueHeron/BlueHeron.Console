@@ -18,7 +18,7 @@ For simplicity's sake the following limitations apply:
 - Optional fields start with a forward slash, e.g. `/OptionalArgument:12345`.
 - Commands also start with a forward slash, e.g. `/Copy -Source:"Sourcepath" -Target:"Destinationpath"`.
 - Lists are populated by repeating the argument, e.g. `/Path:"Path1" /Path:"Path2" /Path:"Path3"`.
-- Booleans only need to be set when the value is `true` and don't need a value, e.g. `/FailSilently`. `/FailSilenty:true` or `/FailSilenty:false` is accepted, but unnecessary.
+- Booleans only need to be set when the value is `true` and don't need a value, e.g. `/FailSilently`. `/FailSilenty:true` or `/FailSilenty:false` is accepted, but unnecessary when the default value is ```false```.
  
 ## Installation
 To use a command-line parser in C#, you can use the following options:
