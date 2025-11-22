@@ -1,7 +1,7 @@
 # BlueHeron.CommandLine.CommandLineParser
 
 ## Introduction
-CommandLineParser is a 15 Kb library for .NET 9 that allows developers to define and handle command-line arguments passed to a script or application. It simplifies the process of parsing arguments, validating inputs, and providing help messages to users.
+CommandLineParser is a 15 Kb library for .NET 10 that allows developers to define and handle command-line arguments passed to a script or application. It simplifies the process of parsing arguments, validating inputs, and providing help messages to users.
 
 ## Features
 - Easy definition of command-line arguments
